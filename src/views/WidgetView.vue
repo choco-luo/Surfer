@@ -6,7 +6,7 @@ import {
   PhysicalPosition,
 } from '@tauri-apps/api/window'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
-import { GripVertical } from '@lucide/vue'
+import { GripVertical, Minus } from '@lucide/vue'
 import GlassCard from '../components/GlassCard.vue'
 import RoadmapItemRow from '../components/RoadmapItemRow.vue'
 import { useRoadmapStore, todayISO } from '../stores/roadmap'
@@ -142,15 +142,25 @@ async function openNotebook() {
   await notebook?.show()
   await notebook?.setFocus()
 }
+
+/** 隱藏浮窗；要再顯示時從系統托盤點 surfer 圖示 */
+async function hideWidget() {
+  await getCurrentWindow().hide()
+}
 </script>
 
 <template>
   <div class="widget" :class="`dir-${direction}`">
     <div class="top">
-      <GlassCard class="date-card" data-tauri-drag-region>
-        <span class="date" data-tauri-drag-region>{{ fullDate }}</span>
-        <button class="icon-btn" title="開啟筆記本" @click="openNotebook">✎</button>
-      </GlassCard>
+      <div class="top-row">
+        <GlassCard class="date-card" data-tauri-drag-region>
+          <span class="date" data-tauri-drag-region>{{ fullDate }}</span>
+          <button class="icon-btn" title="開啟筆記本" @click="openNotebook">✎</button>
+        </GlassCard>
+        <button class="hide-btn" title="隱藏小工具（從托盤圖示叫回）" @click="hideWidget">
+          <Minus :size="14" />
+        </button>
+      </div>
 
       <div class="strip-row">
         <GlassCard class="strip-card">
@@ -180,6 +190,7 @@ async function openNotebook() {
         </GlassCard>
       </div>
     </div>
+    <!-- /top -->
 
     <Transition name="slide-fade">
       <GlassCard
@@ -207,6 +218,9 @@ async function openNotebook() {
   gap: 8px;
   padding: 6px;
   user-select: none;
+  /* 灰色半透明底，讓浮窗的佔用範圍看得見 */
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 18px;
 }
 .widget.dir-up {
   flex-direction: column-reverse;
@@ -217,6 +231,30 @@ async function openNotebook() {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 右上角：隱藏浮窗 */
+.hide-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.hide-btn:hover {
+  background: #fff;
 }
 
 /* 左上角完整日期小卡 */
