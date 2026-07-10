@@ -1,0 +1,21 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Widget 與 Notebook 視窗所需權限",
+  "windows": ["widget", "notebook"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "store:default",
+    "window-state:default",
+    "core:window:allow-set-position",
+    "core:window:allow-set-size",
+    "core:window:allow-outer-position",
+    "core:window:allow-outer-size",
+    "core:window:allow-current-monitor",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-set-focus",
+    "core:window:allow-start-dragging"
+  ]
+}
