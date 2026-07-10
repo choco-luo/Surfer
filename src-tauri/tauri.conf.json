@@ -14,8 +14,8 @@
       {
         "label": "widget",
         "title": "surfer",
-        "width": 300,
-        "height": 72,
+        "width": 460,
+        "height": 132,
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
