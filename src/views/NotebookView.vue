@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
 import RoadmapItemRow from '../components/RoadmapItemRow.vue'
 import SummaryPanel from '../components/SummaryPanel.vue'
 import { useRoadmapStore, todayISO } from '../stores/roadmap'
@@ -27,10 +26,6 @@ async function addItem() {
   title.value = ''
   note.value = ''
 }
-
-function quit() {
-  invoke('exit_app')
-}
 </script>
 
 <template>
@@ -41,7 +36,6 @@ function quit() {
         <button :class="{ active: tab === 'plan' }" @click="tab = 'plan'">規劃</button>
         <button :class="{ active: tab === 'stats' }" @click="tab = 'stats'">統計</button>
       </nav>
-      <button class="quit-btn" @click="quit">結束程式</button>
     </header>
 
     <main v-if="tab === 'plan'" class="plan">
@@ -111,19 +105,6 @@ function quit() {
   opacity: 1;
   font-weight: 600;
 }
-.quit-btn {
-  border: none;
-  background: transparent;
-  color: inherit;
-  opacity: 0.5;
-  font-size: 12px;
-  cursor: pointer;
-}
-.quit-btn:hover {
-  opacity: 1;
-  color: #ff453a;
-}
-
 .plan {
   flex: 1;
   overflow-y: auto;

@@ -6,6 +6,7 @@ import {
   PhysicalPosition,
 } from '@tauri-apps/api/window'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { GripVertical } from '@lucide/vue'
 import GlassCard from '../components/GlassCard.vue'
 import RoadmapItemRow from '../components/RoadmapItemRow.vue'
 import { useRoadmapStore, todayISO } from '../stores/roadmap'
@@ -151,27 +152,33 @@ async function openNotebook() {
         <button class="icon-btn" title="開啟筆記本" @click="openNotebook">✎</button>
       </GlassCard>
 
-      <GlassCard class="strip-card">
-        <div
-          ref="stripEl"
-          class="strip"
-          @wheel.prevent="onWheel"
-          @scroll="updatePanelOffset"
-        >
-          <button
-            v-for="d in days"
-            :key="d.date"
-            class="cell"
-            :data-date="d.date"
-            :class="{ today: d.isToday, selected: expanded && d.date === selectedDate }"
-            @click="selectDate(d.date)"
+      <div class="strip-row">
+        <GlassCard class="strip-card">
+          <div
+            ref="stripEl"
+            class="strip"
+            @wheel.prevent="onWheel"
+            @scroll="updatePanelOffset"
           >
-            <span class="cell-label">{{ d.isToday ? 'Today' : d.label }}</span>
-            <span class="cell-week">{{ d.weekday }}</span>
-            <span v-if="countFor(d.date)" class="badge">{{ countFor(d.date) }}</span>
-          </button>
-        </div>
-      </GlassCard>
+            <button
+              v-for="d in days"
+              :key="d.date"
+              class="cell"
+              :data-date="d.date"
+              :class="{ today: d.isToday, selected: expanded && d.date === selectedDate }"
+              @click="selectDate(d.date)"
+            >
+              <span class="cell-label">{{ d.isToday ? 'Today' : d.label }}</span>
+              <span class="cell-week">{{ d.weekday }}</span>
+              <span v-if="countFor(d.date)" class="badge">{{ countFor(d.date) }}</span>
+            </button>
+          </div>
+        </GlassCard>
+
+        <GlassCard class="drag-card" data-tauri-drag-region title="拖曳移動">
+          <GripVertical :size="16" class="grip-icon" />
+        </GlassCard>
+      </div>
     </div>
 
     <Transition name="slide-fade">
@@ -244,10 +251,32 @@ async function openNotebook() {
 }
 
 /* 日期軸 */
-.strip-card {
+.strip-row {
+  display: flex;
+  gap: 8px;
   height: 76px;
+}
+.strip-card {
+  flex: 1;
+  min-width: 0;
   padding: 6px;
   overflow: hidden;
+}
+
+/* 最右邊的窄拖動把手 */
+.drag-card {
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+.drag-card:active {
+  cursor: grabbing;
+}
+.grip-icon {
+  pointer-events: none;
+  opacity: 0.55;
 }
 .strip {
   display: flex;
