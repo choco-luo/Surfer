@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   getCurrentWindow,
   LogicalSize,
   PhysicalPosition,
 } from '@tauri-apps/api/window'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { GripVertical, Minus } from '@lucide/vue'
 import GlassCard from '../components/GlassCard.vue'
 import RoadmapItemRow from '../components/RoadmapItemRow.vue'
 import { useRoadmapStore, todayISO } from '../stores/roadmap'
 import { decideExpandDirection, type ExpandDirection } from '../composables/useExpandDirection'
+import { DAY_REFRESHED_EVENT, useScheduler } from '../composables/useScheduler'
 
 // 視窗尺寸（logical px），需與 tauri.conf.json 的 widget 視窗一致
 const WIDTH = 460
@@ -62,6 +64,22 @@ const selectedDate = ref<string | null>(null)
 const panelOffset = ref(6)
 const stripEl = ref<HTMLElement | null>(null)
 const busy = ref(false)
+
+// 換新日 / 每日總結排程（只在 widget 視窗運行）
+const { summaryBadge, clearSummaryBadge } = useScheduler()
+
+let unlistenRefresh: UnlistenFn | undefined
+onMounted(async () => {
+  // 換新日到點 → 自動展開今天的清單
+  unlistenRefresh = await listen(DAY_REFRESHED_EVENT, () => void showToday())
+})
+onUnmounted(() => unlistenRefresh?.())
+
+async function showToday() {
+  selectedDate.value = todayISO()
+  updatePanelOffset()
+  await setExpanded(true)
+}
 
 /** 選中日期的事項；今天含逾期未完成，其它日期只列當天 */
 const panelItems = computed(() => {
@@ -126,6 +144,8 @@ async function setExpanded(value: boolean) {
 }
 
 async function selectDate(date: string) {
+  // 查看今天的清單即視為「已讀」每日總結
+  if (date === todayISO()) void clearSummaryBadge()
   if (expanded.value && selectedDate.value === date) {
     // 再點一次同一格 → 收合
     await setExpanded(false)
@@ -155,6 +175,11 @@ async function hideWidget() {
       <div class="top-row">
         <GlassCard class="date-card" data-tauri-drag-region>
           <span class="date" data-tauri-drag-region>{{ fullDate }}</span>
+          <span
+            v-if="summaryBadge"
+            class="summary-dot"
+            title="有新的每日總結，點今天的格子查看"
+          />
           <button class="icon-btn" title="開啟筆記本" @click="openNotebook">✎</button>
         </GlassCard>
         <button class="hide-btn" title="隱藏小工具（從托盤圖示叫回）" @click="hideWidget">
@@ -286,6 +311,15 @@ async function hideWidget() {
 }
 .icon-btn:hover {
   background: rgba(128, 128, 128, 0.35);
+}
+
+/* 每日總結未讀紅點 */
+.summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff453a;
+  flex-shrink: 0;
 }
 
 /* 日期軸 */

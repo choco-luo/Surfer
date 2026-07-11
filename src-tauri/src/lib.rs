@@ -3,7 +3,49 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
 };
+use tauri_plugin_sql::{Migration, MigrationKind};
 use tauri_plugin_window_state::StateFlags;
+
+/// SQLite schema — roadmapwidgetplan.md 第 4 節資料模型
+fn db_migrations() -> Vec<Migration> {
+    vec![Migration {
+        version: 1,
+        description: "init schema",
+        sql: r#"
+            CREATE TABLE IF NOT EXISTS items (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                note TEXT,
+                scheduled_date TEXT NOT NULL,
+                scheduled_date_end TEXT,
+                created_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'scheduled',
+                completed_at TEXT,
+                duration_ms INTEGER
+            );
+            CREATE TABLE IF NOT EXISTS tags (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                color TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS item_tags (
+                item_id TEXT NOT NULL,
+                tag_id TEXT NOT NULL,
+                PRIMARY KEY (item_id, tag_id)
+            );
+            CREATE TABLE IF NOT EXISTS daily_summaries (
+                date TEXT PRIMARY KEY,
+                generated_at TEXT NOT NULL,
+                unfinished_item_ids TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+        "#,
+        kind: MigrationKind::Up,
+    }]
+}
 
 /// 切換浮窗（Widget）顯示/隱藏
 fn toggle_widget(app: &AppHandle) {
@@ -22,6 +64,12 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(
+            tauri_plugin_sql::Builder::new()
+                .add_migrations("sqlite:surfer.db", db_migrations())
+                .build(),
+        )
+        .plugin(tauri_plugin_notification::init())
         .plugin(
             // 只記憶視窗「位置」，尺寸由前端展開/收合邏輯控制
             tauri_plugin_window_state::Builder::new()
